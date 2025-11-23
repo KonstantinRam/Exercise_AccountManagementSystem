@@ -111,14 +111,14 @@ Interactive menu system:
 ```
 
 Each option calls appropriate subprogram using:
-```
+```cobol
 CALL 'CUSTADDD' USING CUST-RECORD, RETURN-CODE.
 ```
 
 ### Part 5: Advanced Features
 
 **Record Locking:**
-```
+```cobol
 READ CUSTOMER-FILE WITH LOCK
     INVALID KEY
         SET CUSTOMER-NOT-FOUND TO TRUE
@@ -128,7 +128,7 @@ END-READ
 ```
 
 **Email Alternate Key:**
-```
+```cobol
 MOVE user-email TO CUST-EMAIL
 READ CUSTOMER-FILE
     KEY IS CUST-EMAIL
