@@ -121,6 +121,7 @@ if "%2"=="XREF" (
 
 rem Run test execution if compilation successful
 if exist %PROGRAM%.exe (
+rem    set COB_RUNTIME_CONFIG=C:\GnuCOBOL\config\ibm-runtime.conf
     echo.
     echo ========================================
     echo  TEST EXECUTION
