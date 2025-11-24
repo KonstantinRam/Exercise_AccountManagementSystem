@@ -40,7 +40,6 @@ cobc -x ^
      -fixed ^
      -Wall ^
      -fmax-errors=30 ^
-     -fdefaultbyte=00 ^
      -fnotrunc ^
      -fcomplex-odo ^
      -fperform-osvs ^
@@ -48,7 +47,6 @@ cobc -x ^
      -fsign=ASCII ^
      -ffold-copy=UPPER ^
      -ffold-call=UPPER ^
-     -fimplicit-init ^
      -fintrinsics=ALL ^
      -ftrap ^
      -debug ^
