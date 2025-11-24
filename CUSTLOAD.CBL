@@ -38,8 +38,8 @@
        FILE SECTION.
        FD  CUSTOMER-MASTER.
        01  CUSTOMER-RECORD.
-      *> I used CUSTMAST for this test file, and got ambiguous error.
-           COPY CUSTFILE. 
+      *> Can't use CUSTFILE => binary index file, Solve ambiguous error.
+           COPY CUSTMAST. 
            
        WORKING-STORAGE SECTION.
        01  WS-CUST-STATUS            PIC XX.
@@ -226,7 +226,7 @@
            INITIALIZE CUSTOMER-RECORD
            MOVE "john@example.com" TO CUST-EMAIL OF CUSTOMER-RECORD
            
-           READ CUSTOMER-MASTER KEY IS CUST-EMAIL
+           READ CUSTOMER-MASTER KEY IS CUST-EMAIL OF CUSTOMER-RECORD
                INVALID KEY
                    DISPLAY "  FAIL: Email not found"
                    ADD 1 TO WS-TESTS-FAILED
