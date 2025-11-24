@@ -1,3 +1,5 @@
+*Task code has extra comentaries that may not be proper for production code. I keep them for learning pupose, to keep my line of thoughts*
+
 # Task 3: Modular Customer Account System
 
 ## Overview
