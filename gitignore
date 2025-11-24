@@ -1,0 +1,5 @@
+# Ignore C source files
+*.c
+
+# Ignore error files
+*.err
