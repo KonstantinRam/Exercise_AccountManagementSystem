@@ -38,8 +38,8 @@
        FILE SECTION.
        FD  CUSTOMER-MASTER.
        01  CUSTOMER-RECORD.
-      *> I use CUSTMAST for this test file, for final version I will go through CUSTFILE + Validation.
-           COPY CUSTMAST. 
+      *> I used CUSTMAST for this test file, and got ambiguous error.
+           COPY CUSTFILE. 
            
        WORKING-STORAGE SECTION.
        01  WS-CUST-STATUS            PIC XX.
