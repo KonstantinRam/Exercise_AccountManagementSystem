@@ -12,8 +12,10 @@
                    88  AUD-REJECTED  VALUE 'R'.
                10  AUD-RETURN-CODE   PIC S9(4) COMP.
                10  AUD-ERROR-MSG     PIC X(80).
-           05  AUD-RESULTS.
+           05  AUD-RESULTS. *> actually, what IF it was NOT about balance, but STATUS?
+               10  AUD-BEFORE-STAT   PIC X.
+               10  AUD-AFTER-STAT    PIC X.
                10  AUD-BEFORE-BAL    PIC S9(9)V99 COMP-3.
                10  AUD-AFTER-BAL     PIC S9(9)V99 COMP-3.
-               10  AUD-PROGRAM-ID    PIC X(8).    *> Which program
-               10  AUD-USER-ID       PIC X(8).    *> Who ran it
+               10  AUD-PROGRAM-ID    PIC X(8).    *> Which program run it.
+               10  AUD-USER-ID       PIC X(8).    *> Who ran it.
