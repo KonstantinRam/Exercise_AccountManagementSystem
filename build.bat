@@ -48,7 +48,6 @@ cobc -x ^
      -ffold-copy=UPPER ^
      -ffold-call=UPPER ^
      -fintrinsics=ALL ^
-     -ftrap ^
      -debug ^
      -fdebugging-line ^
      -fsource-location ^
