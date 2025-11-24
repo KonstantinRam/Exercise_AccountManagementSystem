@@ -16,6 +16,7 @@
 
        01  WS-CUSTOMER-RAW.
            COPY CUSTFILE.
+           
        COPY STATCODE.
 
        
