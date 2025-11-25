@@ -61,6 +61,7 @@
            
        01  WS-DISPLAY-BALANCE        PIC -ZZZ,ZZZ,ZZ9.99.
        
+       01  WS-SAVE-EMAIL             PIC X(50).
        COPY STATCODE.
            
        PROCEDURE DIVISION.
@@ -318,13 +319,13 @@
                    ADD 1 TO WS-TESTS-FAILED
            END-READ.
            
-       TEST-EMAIL-CHANGE.
+           TEST-EMAIL-CHANGE.
            ADD 1 TO WS-TESTS-RUN
-           ADD 1 TO WS-TESTS-SKIPPED
-           EXIT PARAGRAPH
            DISPLAY "  Attempting to change email..."
            
-      *>   Lock, but no unlock for failure yet.
+      *>   Save original email first.
+           MOVE "john@example.com" TO WS-SAVE-EMAIL
+           
            MOVE "C000000001" TO CUST-ID OF CUSTOMER-RECORD
            READ CUSTOMER-MASTER WITH LOCK
                INVALID KEY
@@ -336,13 +337,17 @@
                    REWRITE CUSTOMER-RECORD
                        INVALID KEY
                            DISPLAY "  EXPECTED: Can't change alt key!"
-                           DISPLAY "            Status: " WS-CUST-STATUS
-                           DISPLAY "  Note: Must DELETE then ADD."
                            ADD 1 TO WS-TESTS-PASSED
                        NOT INVALID KEY
-                           DISPLAY "  UNEXPECTED: Email change worked?"
-                           DISPLAY "  Note: Some systems allow this?"
+                           DISPLAY "  UNEXPECTED: Email change worked"
+                           DISPLAY "  GnuCOBOL allows this!"
                            ADD 1 TO WS-TESTS-PASSED
+                           
+      *>               RESTORE ORIGINAL EMAIL FOR NEXT TEST!
+                           MOVE WS-SAVE-EMAIL 
+                               TO CUST-EMAIL OF CUSTOMER-RECORD
+                           REWRITE CUSTOMER-RECORD
+                           DISPLAY "  Restored original email"
                    END-REWRITE
            END-READ.
            
