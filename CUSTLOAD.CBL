@@ -151,6 +151,28 @@
            DISPLAY "TEST 8: Test email uniqueness"
            PERFORM TEST-EMAIL-UNIQUENESS
            .
+           SAFE-WRITE-CUSTOMER.
+           WRITE CUSTOMER-RECORD FROM WS-CUSTOMER
+               INVALID KEY
+                   PERFORM HANDLE-WRITE-ERROR
+               NOT INVALID KEY
+                   CONTINUE
+           END-WRITE
+           
+      *>   Test love to fail
+           IF WS-CUST-STATUS = "47" OR WS-CUST-STATUS = "48"
+               DISPLAY "ERROR: File closed unexpectedly"
+               PERFORM REOPEN-CUSTOMER-FILE
+           END-IF
+           .
+
+           HANDLE-WRITE-ERROR.
+               DISPLAY "FILE ERROR: " WS-CUST-STATUS
+           .
+
+           REOPEN-CUSTOMER-FILE.
+               OPEN I-O CUSTOMER-MASTER
+           .
 
        TEST-EMAIL-UNIQUENESS.
            ADD 1 TO WS-TESTS-RUN
@@ -194,7 +216,7 @@
            MOVE "A"                 TO CUST-STATUS OF WS-CUSTOMER
            MOVE 20240101            TO CUST-OPEN-DATE OF WS-CUSTOMER
            
-           WRITE CUSTOMER-RECORD FROM WS-CUSTOMER
+           PERFORM SAFE-WRITE-CUSTOMER
            
            IF CUST-OK
                DISPLAY "  PASS: Customer written"
@@ -211,17 +233,30 @@
            MOVE "C000000001"        TO CUST-ID OF WS-CUSTOMER
            MOVE "different@test.com" TO CUST-EMAIL OF WS-CUSTOMER
            
-           WRITE CUSTOMER-RECORD FROM WS-CUSTOMER
+           PERFORM SAFE-WRITE-CUSTOMER
            
            IF CUST-DUPLICATE
                DISPLAY "  PASS: Duplicate primary caught"
                ADD 1 TO WS-TESTS-PASSED
+
+               CLOSE CUSTOMER-MASTER
+               OPEN I-O CUSTOMER-MASTER
+
+               MOVE "C000000001" TO CUST-ID OF CUSTOMER-RECORD
+               READ CUSTOMER-MASTER
+                   INVALID KEY
+                       DISPLAY "  (Can't read after dup error?)"
+                   NOT INVALID KEY
+                       DISPLAY "  (Read after dup OK)"
+               END-READ
            ELSE
                DISPLAY "  FAIL: Should have been duplicate"
-               DISPLAY "        Status was: " WS-CUST-STATUS
                ADD 1 TO WS-TESTS-FAILED
            END-IF
 
+           IF WS-CUST-STATUS NOT = "00" AND WS-CUST-STATUS NOT = "23"
+               DISPLAY "  Unexpected status after: " WS-CUST-STATUS
+           END-IF
            .
            
        TEST-DUPLICATE-EMAIL.
@@ -270,6 +305,7 @@
            IF WS-CUST-STATUS NOT = "00"
                DISPLAY "  File status before test: " WS-CUST-STATUS
            END-IF
+
            INITIALIZE CUSTOMER-RECORD
            MOVE "C000000001" TO CUST-ID OF CUSTOMER-RECORD
            READ CUSTOMER-MASTER
@@ -289,7 +325,7 @@
            
            IF WS-CUST-STATUS NOT = "00" AND WS-CUST-STATUS NOT = "23"
                DISPLAY "  Unexpected status after READ: " WS-CUST-STATUS
-           END-IF.
+           END-IF
            .
            
        TEST-READ-BY-EMAIL.
