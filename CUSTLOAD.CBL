@@ -127,9 +127,9 @@
            DISPLAY "TEST 2: Duplicate primary key"
            PERFORM TEST-DUPLICATE-PRIMARY
            
-      *>     DISPLAY " "  
-      *>     DISPLAY "TEST 3: Duplicate email (alternate key)"
-      *>     PERFORM TEST-DUPLICATE-EMAIL
+           DISPLAY " "  
+           DISPLAY "TEST 3: Duplicate email (alternate key)"
+           PERFORM TEST-DUPLICATE-EMAIL
            
            DISPLAY " "
            DISPLAY "TEST 4: Random read by primary key"
@@ -239,6 +239,8 @@
                DISPLAY "  PASS: Duplicate primary caught"
                ADD 1 TO WS-TESTS-PASSED
 
+      *>   Brute FORce for "22" FILE state. FOR real TESTs, I have TO do SetUp TearDown WITH unique files for each test,
+      *>    Not a purpose of this excercise.
                CLOSE CUSTOMER-MASTER
                OPEN I-O CUSTOMER-MASTER
 
