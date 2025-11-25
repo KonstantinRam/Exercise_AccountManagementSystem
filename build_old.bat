@@ -4,43 +4,19 @@ setlocal enabledelayedexpansion
 rem ================================================================
 rem  STRICT IBM MAINFRAME COBOL BUILD SCRIPT
 rem  Emulates z/OS COBOL compiler options and JCL condition codes
-rem  Usage: build program_name [MODULE or MAIN]
 rem ================================================================
 
-rem Check parameters
+rem Check parameter
 if "%1"=="" (
     echo ERROR: NO PROGRAM SPECIFIED
-    echo USAGE: build program_name [MODULE or MAIN]
-    echo        MODULE - Build as subprogram .dll
-    echo        MAIN   - Build as executable .exe [default]
+    echo USAGE: build program_name [without extension]
     exit /b 16
 )
 
-set PROGRAM=%1
-set BUILD_TYPE=%2
-
-rem Default to MAIN if not specified
-if "%BUILD_TYPE%"=="" set BUILD_TYPE=MAIN
-
-rem Set compilation mode flag
-if /I "%BUILD_TYPE%"=="MODULE" (
-    set COMPILE_FLAG=-m
-    set OUTPUT_TYPE=MODULE
-    set OUTPUT_EXT=.dll
-) else if /I "%BUILD_TYPE%"=="MAIN" (
-    set COMPILE_FLAG=-x
-    set OUTPUT_TYPE=EXECUTABLE
-    set OUTPUT_EXT=.exe
-) else (
-    echo ERROR: INVALID BUILD TYPE: %BUILD_TYPE%
-    echo Must be MODULE or MAIN
-    exit /b 16
-)
-
-rem Set project-specific paths
+rem Set project-specific paths (mimics JCL DD statements)
 set COB_COPY_DIR=.\COPYLIB
 set COB_LIBRARY_PATH=.\LOADLIB
-set COB_PRE_LOAD=
+set PROGRAM=%1
 
 rem Create datasets (directories) if missing
 if not exist COPYLIB mkdir COPYLIB
@@ -49,16 +25,17 @@ if not exist LISTING mkdir LISTING
 if not exist SYSOUT mkdir SYSOUT
 
 rem Clean previous outputs
-if exist %PROGRAM%%OUTPUT_EXT% del %PROGRAM%%OUTPUT_EXT%
+if exist %PROGRAM%.exe del %PROGRAM%.exe
 if exist LISTING\%PROGRAM%.lst del LISTING\%PROGRAM%.lst
 
 echo ========================================
-echo  COMPILING %PROGRAM% as %OUTPUT_TYPE%
+echo  COMPILING %PROGRAM%
 echo  TIME: %DATE% %TIME%
 echo ========================================
 
 rem Strict IBM mainframe compilation
-cobc %COMPILE_FLAG% ^
+rem Mimics COBOL compiler options: RENT,APOST,NODYNAM,TEST,XREF
+cobc -x ^
      -std=ibm-strict ^
      -fixed ^
      -Wall ^
@@ -90,13 +67,7 @@ rem ========================================
 if !RC! equ 0 (
     echo.
     echo COMPILATION SUCCESSFUL - RC=0000
-    echo LOAD MODULE: %PROGRAM%%OUTPUT_EXT%
-    
-    rem Move modules to LOADLIB
-    if /I "%BUILD_TYPE%"=="MODULE" (
-        if exist %PROGRAM%.dll move %PROGRAM%.dll LOADLIB\ >nul
-        echo MODULE STORED IN LOADLIB
-    )
+    echo LOAD MODULE: %PROGRAM%.exe
     goto :check_warnings
 )
 
@@ -141,28 +112,23 @@ if !errorlevel! equ 0 (
 )
 
 rem Display cross-reference if requested
-if "%3"=="XREF" (
+if "%2"=="XREF" (
     echo.
     echo CROSS REFERENCE LISTING:
     echo ========================
-    cobc %COMPILE_FLAG% -std=ibm-strict -fixed -Xref %PROGRAM%.cbl
+    cobc -x -std=ibm-strict -fixed -Xref %PROGRAM%.cbl
 )
 
-rem Only run if it's an executable
-if /I "%BUILD_TYPE%"=="MAIN" (
-    if exist %PROGRAM%.exe (
-        echo.
-        echo ========================================
-        echo  TEST EXECUTION
-        echo ========================================
-        %PROGRAM%.exe
-        echo.
-        echo EXECUTION RC=!errorlevel!
-    )
-) else (
+rem Run test execution if compilation successful
+if exist %PROGRAM%.exe (
+rem    set COB_RUNTIME_CONFIG=C:\GnuCOBOL\config\ibm-runtime.conf
     echo.
-    echo MODULE COMPILED - Cannot execute directly
-    echo Use CALL from main program to test
+    echo ========================================
+    echo  TEST EXECUTION
+    echo ========================================
+    %PROGRAM%.exe
+    echo.
+    echo EXECUTION RC=!errorlevel!
 )
 
 goto :end
