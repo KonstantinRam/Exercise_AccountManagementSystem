@@ -57,6 +57,7 @@
            05  WS-TESTS-RUN          PIC 9(3) VALUE ZERO.
            05  WS-TESTS-PASSED       PIC 9(3) VALUE ZERO.
            05  WS-TESTS-FAILED       PIC 9(3) VALUE ZERO.
+           05  WS-TESTS-SKIPPED      PIC 9(3) VALUE ZERO.
            
        01  WS-DISPLAY-BALANCE        PIC -ZZZ,ZZZ,ZZ9.99.
        
@@ -76,16 +77,18 @@
            PERFORM OPEN-OR-CREATE-FILE
            IF CUST-OK
                PERFORM RUN-ALL-TESTS
-               PERFORM CLOSE-FILE
+               
            ELSE
                DISPLAY "FATAL: Cannot open/create file."
                MOVE RC-SEVERE TO RETURN-CODE
            END-IF
            
+           PERFORM CLOSE-FILE
            DISPLAY "========================================="
-           DISPLAY "Tests Run:    " WS-TESTS-RUN
-           DISPLAY "Tests Passed: " WS-TESTS-PASSED
-           DISPLAY "Tests Failed: " WS-TESTS-FAILED
+           DISPLAY "Tests Run:     " WS-TESTS-RUN
+           DISPLAY "Tests Passed:  " WS-TESTS-PASSED
+           DISPLAY "Tests Failed:  " WS-TESTS-FAILED
+           DISPLAY "Tests Skipped: " WS-TESTS-SKIPPED
            DISPLAY "========================================="
            
            STOP RUN.
@@ -94,7 +97,8 @@
       *>   I OPEN OR create FILE. 
       *> FOR the task probably fine, IRL I guess this PROGRAM shouldn't have situation with no Customer file
       *> It will indicatea SIGN OF corruption.
-      *> but for the purpose of learning exercise I will follow with => not exist create pattern.
+      *> but FOR the purpose OF learning exercise I will follow WITH => NOT exist create pattern.
+      *> Reusing old file with OPEN I-O CUSTOMER-MASTER lead to TEST 3 fail on second run of tests, somehow.
            OPEN I-O CUSTOMER-MASTER
            IF CUST-FILE-MISSING
                DISPLAY "File doesn't exist - creating..."
@@ -138,8 +142,42 @@
            
            DISPLAY " "
            DISPLAY "TEST 7: Change email (the problem)"
-           PERFORM TEST-EMAIL-CHANGE.
+           PERFORM TEST-EMAIL-CHANGE
            
+           DISPLAY " "
+           DISPLAY "TEST 8: Test email uniqueness"
+           PERFORM TEST-EMAIL-UNIQUENESS
+           .
+
+       TEST-EMAIL-UNIQUENESS.
+           ADD 1 TO WS-TESTS-RUN
+           
+      *>   Try to read both records with same email
+           INITIALIZE CUSTOMER-RECORD
+           MOVE "john@example.com" TO CUST-EMAIL OF CUSTOMER-RECORD
+           
+           READ CUSTOMER-MASTER KEY IS CUST-EMAIL OF CUSTOMER-RECORD
+               INVALID KEY
+                   DISPLAY "  No records with this email?"
+               NOT INVALID KEY
+                   DISPLAY "  First record: " CUST-ID OF CUSTOMER-RECORD
+           END-READ
+           
+      *>   Try READ NEXT to see if there's another. If prev failed and added wrong one. (that happened, this test is to find wht)
+           READ CUSTOMER-MASTER NEXT
+               AT END
+                   DISPLAY "  No more records"
+               NOT AT END
+                 IF CUST-EMAIL OF CUSTOMER-RECORD = "john@example.com"
+                   DISPLAY "  PROBLEM: Another record with same email: "
+                               CUST-ID OF CUSTOMER-RECORD
+                       ADD 1 TO WS-TESTS-FAILED
+                 ELSE
+                   DISPLAY "  Next record has different email."
+                   ADD 1 TO WS-TESTS-PASSED
+                 END-IF
+           END-READ. 
+
        TEST-WRITE-FIRST.
            ADD 1 TO WS-TESTS-RUN
            INITIALIZE WS-CUSTOMER
@@ -183,7 +221,21 @@
            
        TEST-DUPLICATE-EMAIL.
            ADD 1 TO WS-TESTS-RUN
-           
+
+            *>   First, check if email already exists
+           INITIALIZE CUSTOMER-RECORD
+           MOVE "john@example.com" TO CUST-EMAIL OF CUSTOMER-RECORD
+           READ CUSTOMER-MASTER KEY IS CUST-EMAIL OF CUSTOMER-RECORD
+               INVALID KEY
+                   DISPLAY "  Email not in file yet."
+                   DISPLAY "  Test not applicable."
+                   ADD 1 TO WS-TESTS-SKIPPED
+                   EXIT PARAGRAPH
+               NOT INVALID KEY
+                   DISPLAY "  Email already exists for: " 
+                           CUST-ID OF CUSTOMER-RECORD
+           END-READ     
+
       *>   Different ID but same email as first customer.
            MOVE "C000000002"       TO CUST-ID OF WS-CUSTOMER
            MOVE "john@example.com" TO CUST-EMAIL OF WS-CUSTOMER
@@ -198,7 +250,19 @@
                DISPLAY "  FAIL: Should reject duplicate email"
                DISPLAY "        Status was: " WS-CUST-STATUS
                ADD 1 TO WS-TESTS-FAILED
-           END-IF.
+           END-IF
+
+      *>      Extra check, what actually got written.
+               INITIALIZE CUSTOMER-RECORD
+               MOVE "C000000002" TO CUST-ID OF CUSTOMER-RECORD
+               READ CUSTOMER-MASTER
+                   INVALID KEY
+                       DISPLAY "     C000000002 not in file"
+                   NOT INVALID KEY
+                       DISPLAY "     C000000002 IS in file with email: "
+                               CUST-EMAIL OF CUSTOMER-RECORD
+               END-READ     
+           .
            
        TEST-READ-BY-PRIMARY.
            ADD 1 TO WS-TESTS-RUN
@@ -268,11 +332,11 @@
                        INVALID KEY
                            DISPLAY "  EXPECTED: Can't change alt key!"
                            DISPLAY "            Status: " WS-CUST-STATUS
-                           DISPLAY "  Learning: Must DELETE then ADD"
+                           DISPLAY "  Note: Must DELETE then ADD."
                            ADD 1 TO WS-TESTS-PASSED
                        NOT INVALID KEY
                            DISPLAY "  UNEXPECTED: Email change worked?"
-                           DISPLAY "  Note: Some systems allow this"
+                           DISPLAY "  Note: Some systems allow this?"
                            ADD 1 TO WS-TESTS-PASSED
                    END-REWRITE
            END-READ.
