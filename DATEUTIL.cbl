@@ -15,7 +15,7 @@
            05  WS-MONTH          PIC 99.
            05  WS-DAY            PIC 99.
            
-       01  WS-FEB-DAY-CHECK  PIC 9 VALUE 28.
+       01  WS-FEB-DAY-CHECK  PIC 99 VALUE 28.
        LINKAGE SECTION.
       *> Pointers from a caller.
        01  LS-DATE-YYYYMMDD     PIC 9(8).
@@ -58,7 +58,7 @@
            
       
            PERFORM CHECK-LEAP-YEAR
-           IF WS-IS-LEAP-YEAR
+           IF LEAP-YEAR
                MOVE 29 TO WS-FEB-DAY-CHECK
            ELSE
                MOVE 28 TO WS-FEB-DAY-CHECK
@@ -90,24 +90,24 @@
            CHECK-LEAP-YEAR.
            *> Div by 400 => leap year.
            IF FUNCTION REM(WS-YEAR, 400) = 0
-               MOVE 'Y' TO WS-IS-LEAP-YEAR
+               SET LEAP-YEAR TO TRUE
                EXIT PARAGRAPH
            END-IF
     
            *> Div by 100 => NOT leap year.
            IF FUNCTION REM(WS-YEAR, 100) = 0
-               MOVE 'N' TO WS-IS-LEAP-YEAR
+               SET NOT-LEAP-YEAR TO TRUE
            EXIT PARAGRAPH
            END-IF
     
            *> Div by 4 => leap year.
            IF FUNCTION REM(WS-YEAR, 4) = 0
-               MOVE 'Y' TO WS-IS-LEAP-YEAR
+               SET LEAP-YEAR TO TRUE
                EXIT PARAGRAPH
            END-IF
     
            *> Otherwise => NOT leap year.
-           MOVE 'N' TO WS-IS-LEAP-YEAR
+           SET NOT-LEAP-YEAR TO TRUE
            .
            
        END PROGRAM DATEUTIL.
